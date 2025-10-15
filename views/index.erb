@@ -1,0 +1,72 @@
+<div class="grid">
+  <div>
+    <h2>Register for the conference</h2>
+    <form method="POST" action="/register" class="grid-1">
+      <div>
+        <label for="name">Full Name</label>
+        <input type="text" id="name" name="name" value="<%= Rack::Utils.escape_html(name) %>" required />
+      </div>
+      <div>
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" value="<%= Rack::Utils.escape_html(email) %>" required />
+      </div>
+      <div>
+        <label for="destination">Destination City</label>
+        <input type="text" id="destination" name="destination" value="<%= Rack::Utils.escape_html(destination) %>" placeholder="e.g., London" required />
+      </div>
+      <div>
+        <button type="submit">Register</button>
+      </div>
+      <small>Submitting will store your registration in DynamoDB.</small>
+    </form>
+  </div>
+  <div>
+    <h2>Weather forecast for <%= Rack::Utils.escape_html(destination) %></h2>
+    <% if error %>
+      <div class="error"><%= Rack::Utils.escape_html(error) %></div>
+    <% elsif weather %>
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Temp (°C)</th>
+            <th>Conditions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% weather.each do |slot| %>
+            <tr>
+              <td><%= Rack::Utils.escape_html(slot['dt_txt'] || slot['dt'].to_s) %></td>
+              <td><%= (slot.dig('main','temp') || '').to_s %></td>
+              <td><%= Rack::Utils.escape_html(slot.dig('weather',0,'description') || '') %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p><small>No weather data.</small></p>
+    <% end %>
+
+    <h3 style="margin-top:24px;">Recent registrations</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Destination</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% registrations.each do |r| %>
+          <tr>
+            <td><%= Rack::Utils.escape_html(r['name']) %></td>
+            <td><%= Rack::Utils.escape_html(r['email']) %></td>
+            <td><%= Rack::Utils.escape_html(r['destination']) %></td>
+            <td><%= Time.at(r['created_at'].to_i).utc %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
