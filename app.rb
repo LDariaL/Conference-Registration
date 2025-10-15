@@ -44,7 +44,7 @@ class App
       email:       email,
       weather:     weather,
       error:       error,
-      registrations: repo.list(limit: 10)
+      registrations: repo.list(limit: 1)
     })
 
     html = render_layout(content: body, flash: flash)
