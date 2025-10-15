@@ -36,5 +36,23 @@ module Lib
                        expression_attribute_names: { '#id' => 'id', '#n' => 'name' })
       (resp.items || []).sort_by { |i| -i['created_at'].to_i }
     end
+    def find_by_email(email)
+      return nil if email.nil? || email.empty?
+
+      response = dynamodb_client.get_item({
+        table_name: table_name,
+        key: {
+          'email' => email
+        }
+      })
+
+      response.item
+    rescue Aws::DynamoDB::Errors::ServiceError => e
+      puts "Error fetching registration by email: #{e.message}"
+      nil
+    rescue Aws::DynamoDB::Errors::ResourceNotFoundException => e
+      puts "Item not found: #{e.message}"
+      nil
+    end
   end
 end

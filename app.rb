@@ -28,6 +28,25 @@ class App
     email       = req.params['email'].to_s
     flash       = req.cookies['flash']
 
+
+    user_email = req.cookies['user_email']
+
+
+    current_registration = nil
+    if user_email && !user_email.empty?
+      begin
+        current_registration = repo.find_by_email(user_email)
+
+        if current_registration
+          name = current_registration['name'] || name
+          email = current_registration['email'] || email
+          destination = current_registration['destination'] || destination
+        end
+      rescue => e
+        puts "Error loading registration: #{e.message}"
+      end
+    end
+
     weather = nil
     error   = nil
 
@@ -44,7 +63,7 @@ class App
       email:       email,
       weather:     weather,
       error:       error,
-      registrations: repo.list(limit: 1)
+      current_registration: current_registration
     })
 
     html = render_layout(content: body, flash: flash)
@@ -67,9 +86,23 @@ class App
 
     begin
       repo.create(name: name, email: email, destination: destination)
-      redirect_with_message("/?destination=#{Rack::Utils.escape_path(destination)}",
-                            'Registration successful!')
+
+
+      path = "/?destination=#{Rack::Utils.escape_path(destination)}"
+      msg = 'Registration successful!'
+
+      flash_cookie = "flash=#{Rack::Utils.escape(msg)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=5"
+      user_cookie = "user_email=#{Rack::Utils.escape(email)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=#{60*60*24*30}"
+
+      headers = {
+        'Location' => path,
+        'Set-Cookie' => "#{flash_cookie}\n#{user_cookie}"
+      }
+
+      [302, headers, []]
     rescue => e
+      puts "Registration error: #{e.message}"
+      puts e.backtrace.join("\n")
       redirect_with_message('/', "Failed to register: #{Rack::Utils.escape_html(e.message)}")
     end
   end
@@ -91,7 +124,7 @@ class App
   def redirect_with_message(path, msg)
     headers = {
       'Location'    => path,
-      'Set-Cookie'  => "flash=#{Rack::Utils.escape(msg)}; Path=/; HttpOnly; SameSite=Lax"
+      'Set-Cookie'  => "flash=#{Rack::Utils.escape(msg)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=5"
     }
     [302, headers, []]
   end
