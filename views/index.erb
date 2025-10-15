@@ -19,7 +19,32 @@
       </div>
       <small>Submitting will store your registration in DynamoDB.</small>
     </form>
+
+    <h3>Your registration</h3>
+    <% if defined?(current_registration) && current_registration %>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Destination</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><%= Rack::Utils.escape_html(current_registration['name']) %></td>
+            <td><%= Rack::Utils.escape_html(current_registration['email']) %></td>
+            <td><%= Rack::Utils.escape_html(current_registration['destination']) %></td>
+            <td><%= Time.at(current_registration['created_at'].to_i).utc.strftime('%Y-%m-%d %H:%M UTC') %></td>
+          </tr>
+        </tbody>
+      </table>
+    <% else %>
+      <p><small>You haven't registered yet.</small></p>
+    <% end %>
   </div>
+
   <div>
     <h2>Weather forecast for <%= Rack::Utils.escape_html(destination) %></h2>
     <% if error %>
@@ -44,29 +69,7 @@
         </tbody>
       </table>
     <% else %>
-      <p><small>No weather data.</small></p>
+      <p><small>No weather data available. Enter a destination city and register to see the forecast.</small></p>
     <% end %>
-
-    <h3 style="margin-top:24px;">Recent registrations</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Destination</th>
-          <th>Created</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% registrations.each do |r| %>
-          <tr>
-            <td><%= Rack::Utils.escape_html(r['name']) %></td>
-            <td><%= Rack::Utils.escape_html(r['email']) %></td>
-            <td><%= Rack::Utils.escape_html(r['destination']) %></td>
-            <td><%= Time.at(r['created_at'].to_i).utc %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
   </div>
 </div>
