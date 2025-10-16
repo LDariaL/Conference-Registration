@@ -6,24 +6,25 @@
   <title>Conference Registration</title>
   <style>
     :root {
-      --bg: #0b0f14;
-      --panel: #111827;
-      --panel-elev: #0f172a;
-      --text: #e5e7eb;
-      --muted: #b3a6d9; /* more violet-muted */
-      --primary: #8b5cf6; /* violet */
-      --primary-600: #7c3aed; /* deeper violet */
-      --primary-700: #6d28d9; /* even deeper */
-      --accent-1: #a78bfa; /* light purple accent */
-      --success-bg: #1a0f2a; /* purple-tinted success bg */
-      --success-text: #c4b5fd; /* lilac success text */
-      --success-glow: rgba(167,139,250,0.18);
+      --bg: #0e0a14;
+      --panel: #141126;
+      --panel-elev: #17112b;
+      --text: #eceaf6;
+      --muted: #cfc4ff; /* lighter violet-muted */
+      --primary: #b79bff; /* lighter violet */
+      --primary-600: #a785ff; /* mid-light violet */
+      --primary-700: #9670ff; /* slightly deeper for gradient end */
+      --accent-1: #d6c9ff; /* very light purple accent */
+      --success-bg: #221639; /* soft violet-tinted success bg */
+      --success-text: #e3dbff; /* very light lilac */
+      --success-glow: rgba(214,201,255,0.25);
       --error-bg: #2a0f13;
-      --error-text: #fca5a5;
-      --border: #2a1f39; /* violet-ish border */
-      --table-stripe: #110d1a; /* deep purple stripe */
+      --error-text: #fcb0b0;
+      --border: #3a2b57; /* lighter violet-ish border */
+      --table-stripe: #1a1430; /* lighter deep purple stripe */
       --shadow: 0 10px 25px rgba(0,0,0,0.35);
       --radius: 12px;
+      --gap-field-top: 40px; /* strong spacing above first form field under a section title */
     }
 
     @media (prefers-color-scheme: dark) {
@@ -34,13 +35,13 @@
     html, body { height: 100%; }
     body {
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      margin: 0; padding: 0; background: radial-gradient(1200px 800px at 10% 10%, #1a1630 0%, #0d0a17 60%, #0a0812 100%);
+      margin: 0; padding: 0; background: radial-gradient(1200px 800px at 10% 10%, #221a3b 0%, #130f23 60%, #100c1c 100%);
       color: var(--text);
     }
 
     header {
       position: sticky; top: 0; z-index: 10;
-      background: rgba(18,12,32,0.7);
+      background: rgba(34,26,59,0.65);
       backdrop-filter: blur(8px);
       border-bottom: 1px solid var(--border);
       padding: 16px 24px;
@@ -50,7 +51,7 @@
     }
     .logo {
       width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, var(--primary) 0%, var(--accent-1) 100%);
-      box-shadow: 0 4px 12px rgba(139,92,246,0.35);
+      box-shadow: 0 4px 12px rgba(183,155,255,0.45);
     }
 
     main { max-width: 1100px; margin: 32px auto; padding: 0 16px; }
@@ -70,18 +71,18 @@
 
     label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--muted); }
     input, select {
-      width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: #160f27; color: var(--text);
+      width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: #1b1533; color: var(--text);
       outline: none; transition: border-color .15s ease, box-shadow .15s ease;
     }
-    input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(139,92,246,0.18); }
+    input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(183,155,255,0.25); }
 
     button {
       appearance: none; background: linear-gradient(180deg, var(--primary) 0%, var(--primary-600) 100%);
-      color: #fff; border: 0; padding: 12px 16px; border-radius: 10px; cursor: pointer; font-weight: 600;
-      box-shadow: 0 8px 20px rgba(124,58,237,0.35);
+      color: #1a1030; border: 0; padding: 12px 16px; border-radius: 10px; cursor: pointer; font-weight: 700;
+      box-shadow: 0 8px 20px rgba(151,112,255,0.35);
       transition: transform .04s ease, box-shadow .15s ease, filter .15s ease;
     }
-    button:hover { filter: brightness(1.06); box-shadow: 0 10px 24px rgba(124,58,237,0.45); }
+    button:hover { filter: brightness(1.03); box-shadow: 0 10px 24px rgba(151,112,255,0.45); }
     button:active { transform: translateY(1px); }
 
     .flash {
@@ -89,7 +90,7 @@
       display: flex; align-items: center; gap: 10px;
       background: var(--success-bg);
       color: var(--success-text);
-      padding: 12px 14px; border-radius: 10px; margin-bottom: 12px; border: 1px solid rgba(167,139,250,0.35);
+      padding: 12px 14px; border-radius: 10px; margin-bottom: 12px; border: 1px solid rgba(214,201,255,0.45);
       box-shadow: 0 0 0 0 var(--success-glow), 0 10px 20px rgba(0,0,0,0.25);
       opacity: 0; transform: translateY(-6px);
       animation: flash-in .35s ease forwards;
@@ -109,11 +110,15 @@
     @keyframes flash-out { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-6px); } }
 
     table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 10px; border: 1px solid var(--border); }
-    thead th { background: #1e1633; color: var(--muted); font-weight: 600; }
+    thead th { background: #241c42; color: var(--muted); font-weight: 700; }
     th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); }
     tbody tr:nth-child(odd) { background: var(--table-stripe); }
 
-    .section-title { margin: 0 0 8px 0; font-size: 18px; letter-spacing: .2px; color: var(--accent-1); }
+    .section-title { margin: 0 0 2px 0; font-size: 18px; letter-spacing: .2px; color: var(--accent-1); }
+    /* Increase space above the first field following a section-title */
+    .section-title + .section-spacer { height: var(--gap-field-top); }
+    .section-title + form .grid-1 > div:first-child { margin-top: var(--gap-field-top); }
+
     small { color: var(--muted); }
   </style>
 </head>
