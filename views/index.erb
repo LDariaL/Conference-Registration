@@ -12,7 +12,7 @@
       </div>
       <div>
         <label for="destination">Destination City</label>
-        <input type="text" id="destination" name="destination" value="<%= Rack::Utils.escape_html(destination) %>" placeholder="e.g., London" required />
+        <input type="text" id="destination" name="destination" value="<%= Rack::Utils.escape_html(destination && destination != 'London' ? destination : '') %>" placeholder="e.g., Tokyo" required />
       </div>
       <div>
         <button type="submit">Register</button>
@@ -36,7 +36,7 @@
         </thead>
         <tbody>
           <% weather_daily.each do |day| %>
-            <% # day: {'date'=>"YYYY-MM-DD", 'temp'=>{'min'=>..,'max'=>..}, 'pop'=>0..1, 'weather'=>[{ 'description'=>.., 'icon'=>.. }]} %>
+            <% # day: {'date'=>"YYYY-MM-DD", 'temp'=>{'min'=>..,'max'=>..}, 'pop'=>0..1, 'weather'=>[{ 'description'=>.., 'icon'=>.. }], 'timezone_offset'=>seconds } %>
             <% date_str = day['date'] || (Time.at(day['dt'].to_i).utc.to_date.to_s rescue nil) %>
             <% temp = day['temp'] || {} %>
             <% min = temp['min'] %>
