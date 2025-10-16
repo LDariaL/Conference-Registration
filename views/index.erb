@@ -23,11 +23,11 @@
     </form>
   </div>
   <div>
-    <h2 class="section-title">Weather (next days) for <%= Rack::Utils.escape_html(destination) %></h2>
+    <h2 class="section-title" style="margin-bottom:10px;">Weather (next days) for <%= Rack::Utils.escape_html(destination) %></h2>
     <% if error %>
       <div class="error"><%= Rack::Utils.escape_html(error) %></div>
     <% elsif weather_daily %>
-      <table>
+      <table style="margin-bottom: 16px;">
         <thead>
           <tr>
             <th>Date</th>
@@ -61,10 +61,10 @@
         </tbody>
       </table>
     <% else %>
-      <p><small>No weather data.</small></p>
+      <p style="margin-bottom: 16px;"><small>No weather data.</small></p>
     <% end %>
 
-    <h3 class="section-title" style="margin-top:20px;">Recent registrations</h3>
+    <h3 class="section-title" style="margin: 14px 0 10px 0;">Recent registrations</h3>
     <table>
       <thead>
         <tr>
