@@ -59,14 +59,14 @@ class App
       end
     end
 
-    weather = nil
+    daily = nil
     error   = nil
 
     begin
       client  = Lib::WeatherClient.new
-      warn "[App#index] fetching forecast for #{destination.inspect}"
-      weather = client.forecast(city: destination, units: 'metric', limit: 5)
-      warn "[App#index] forecast slots: #{weather&.length}"
+      warn "[App#index] fetching daily forecast (free-tier) for #{destination.inspect}"
+      daily = client.daily_from_3h_forecast(city: destination, units: 'metric', days: 7)
+      warn "[App#index] daily days: #{daily&.length}"
     rescue => e
       error = e.message
       warn "[App#index] weather error: #{e.class}: #{e.message}"
@@ -91,7 +91,7 @@ class App
       destination: destination,
       name:        name,
       email:       email,
-      weather:     weather,
+      weather_daily: daily,
       error:       error,
       current_registration: current_registration,
       registrations: registrations

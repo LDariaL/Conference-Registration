@@ -21,24 +21,30 @@
     </form>
   </div>
   <div>
-    <h2 class="section-title">Weather forecast for <%= Rack::Utils.escape_html(destination) %></h2>
+    <h2 class="section-title">Weather (next days) for <%= Rack::Utils.escape_html(destination) %></h2>
     <% if error %>
       <div class="error"><%= Rack::Utils.escape_html(error) %></div>
-    <% elsif weather %>
+    <% elsif weather_daily %>
       <table>
         <thead>
           <tr>
-            <th>Time</th>
-            <th>Temp (°C)</th>
+            <th>Date</th>
+            <th>Min / Max (°C)</th>
             <th>Conditions</th>
           </tr>
         </thead>
         <tbody>
-          <% weather.each do |slot| %>
+          <% weather_daily.each do |day| %>
+            <% # For free-tier aggregation, day is a hash like: {'date'=>"YYYY-MM-DD", 'temp'=>{'min'=>..,'max'=>..}, 'weather'=>[{ 'description'=>.. }]} %>
+            <% date_str = day['date'] || (Time.at(day['dt'].to_i).utc.to_date.to_s rescue nil) %>
+            <% temp = day['temp'] || {} %>
+            <% min = temp['min'] %>
+            <% max = temp['max'] %>
+            <% desc = (day.dig('weather',0,'description') || '') %>
             <tr>
-              <td><%= Rack::Utils.escape_html(slot['dt_txt'] || slot['dt'].to_s) %></td>
-              <td><%= (slot.dig('main','temp') || '').to_s %></td>
-              <td><%= Rack::Utils.escape_html(slot.dig('weather',0,'description') || '') %></td>
+              <td><%= Rack::Utils.escape_html(date_str.to_s) %></td>
+              <td><%= [min, max].compact.map { |t| t.round(1) }.join(' / ') %></td>
+              <td><%= Rack::Utils.escape_html(desc) %></td>
             </tr>
           <% end %>
         </tbody>
