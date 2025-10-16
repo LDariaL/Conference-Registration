@@ -9,6 +9,8 @@ class App
   def call(env)
     request = Rack::Request.new(env)
 
+    warn "[App#call] #{request.request_method} #{request.path_info} query=#{request.query_string.inspect}"
+
     case [request.request_method, request.path_info]
     when ['GET', '/']
       handle_index(request)
@@ -26,16 +28,26 @@ class App
     destination = (req.params['destination'] || ENV['DEFAULT_DESTINATION'] || 'London').to_s
     name        = req.params['name'].to_s
     email       = req.params['email'].to_s
-    flash       = req.cookies['flash']
 
+    # Debug: log incoming params and cookies (redact email partially)
+    begin
+      redacted_email = email.gsub(/(.{2}).*(@.*)?/) { |m| m[0,2].to_s + '***' + ($2 || '') }
+      warn "[App#index] params: destination=#{destination.inspect} name_length=#{name.length} email=#{redacted_email}"
+      warn "[App#index] cookies: keys=#{req.cookies.keys}"
+    rescue => e
+      warn "[App#index] param logging error: #{e.class}: #{e.message}"
+    end
 
+    # Primary identity: cookie; Fallback: query param for first landing after redirect
     user_email = req.cookies['user_email']
-
+    user_email = req.params['user_email'].to_s if (user_email.nil? || user_email.empty?) && req.params['user_email']
 
     current_registration = nil
     if user_email && !user_email.empty?
       begin
+        warn "[App#index] fetching current registration for user_email=#{user_email.inspect}"
         current_registration = repo.find_by_email(user_email)
+        warn "[App#index] current_registration found? #{!current_registration.nil?}"
 
         if current_registration
           name = current_registration['name'] || name
@@ -43,7 +55,7 @@ class App
           destination = current_registration['destination'] || destination
         end
       rescue => e
-        puts "Error loading registration: #{e.message}"
+        warn "[App#index] find_by_email error: #{e.class}: #{e.message}"
       end
     end
 
@@ -52,9 +64,27 @@ class App
 
     begin
       client  = Lib::WeatherClient.new
+      warn "[App#index] fetching forecast for #{destination.inspect}"
       weather = client.forecast(city: destination, units: 'metric', limit: 5)
+      warn "[App#index] forecast slots: #{weather&.length}"
     rescue => e
       error = e.message
+      warn "[App#index] weather error: #{e.class}: #{e.message}"
+    end
+
+    # Load recent registrations for the table, filter strictly to current user
+    registrations = []
+    begin
+      warn "[App#index] loading recent registrations"
+      registrations = repo.list(limit: 25)
+      if user_email && !user_email.empty?
+        registrations = registrations.select { |r| (r['email'] || '') == user_email }
+      else
+        registrations = []
+      end
+      warn "[App#index] registrations visible to user: #{registrations.length}"
+    rescue => e
+      warn "[App#index] list registrations error: #{e.class}: #{e.message}"
     end
 
     body = render_view('index', locals: {
@@ -63,10 +93,11 @@ class App
       email:       email,
       weather:     weather,
       error:       error,
-      current_registration: current_registration
+      current_registration: current_registration,
+      registrations: registrations
     })
 
-    html = render_layout(content: body, flash: flash)
+    html = render_layout(content: body, flash: nil)
     [200, { 'Content-Type' => 'text/html; charset=utf-8' }, [html]]
   end
 
@@ -80,30 +111,44 @@ class App
     email       = (req.params['email'] || '').strip
     destination = (req.params['destination'] || '').strip
 
+    # Debug
+    begin
+      red_email = email.gsub(/(.{2}).*(@.*)?/) { |m| m[0,2].to_s + '***' + ($2 || '') }
+      warn "[App#register] incoming: name_length=#{name.length} email=#{red_email} destination=#{destination.inspect}"
+    rescue => e
+      warn "[App#register] logging error: #{e.class}: #{e.message}"
+    end
+
     if name.empty? || email.empty? || destination.empty?
-      return redirect_with_message('/', 'Please fill in all required fields.')
+      return redirect_simple('/', user_msg: 'Please fill in all required fields.')
+    end
+
+    # Email format validation (pragmatic, case-insensitive)
+    unless email.match?(/\A[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\z/i)
+      return redirect_simple('/', user_msg: 'Please enter a valid email address.')
     end
 
     begin
+      warn "[App#register] creating registration in DynamoDB"
       repo.create(name: name, email: email, destination: destination)
+      warn "[App#register] create succeeded"
 
+      # Set cookie for future visits, but also pass user_email in query for immediate visibility
+      path = "/?destination=#{Rack::Utils.escape_path(destination)}&user_email=#{Rack::Utils.escape_path(email)}"
 
-      path = "/?destination=#{Rack::Utils.escape_path(destination)}"
-      msg = 'Registration successful!'
-
-      flash_cookie = "flash=#{Rack::Utils.escape(msg)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=5"
       user_cookie = "user_email=#{Rack::Utils.escape(email)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=#{60*60*24*30}"
 
       headers = {
         'Location' => path,
-        'Set-Cookie' => "#{flash_cookie}\n#{user_cookie}"
+        'Set-Cookie' => [user_cookie]
       }
 
+      warn "[App#register] redirecting 302 to #{path} with user_email cookie"
       [302, headers, []]
     rescue => e
-      puts "Registration error: #{e.message}"
-      puts e.backtrace.join("\n")
-      redirect_with_message('/', "Failed to register: #{Rack::Utils.escape_html(e.message)}")
+      warn "[App#register] Registration error: #{e.class}: #{e.message}"
+      warn e.backtrace.join("\n")
+      redirect_simple('/', user_msg: "Failed to register: #{Rack::Utils.escape_html(e.message)}")
     end
   end
 
@@ -121,11 +166,10 @@ class App
     ERB.new(template).result_with_hash(content: content, flash: flash)
   end
 
-  def redirect_with_message(path, msg)
-    headers = {
-      'Location'    => path,
-      'Set-Cookie'  => "flash=#{Rack::Utils.escape(msg)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=5"
-    }
+  # Simple redirect without flash; optional message can be encoded in destination if needed
+  def redirect_simple(path, user_msg: nil)
+    headers = { 'Location' => path }
+    warn "[App#redirect_simple] 302 -> #{path} msg=#{user_msg.inspect}"
     [302, headers, []]
   end
 end

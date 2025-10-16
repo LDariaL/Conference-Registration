@@ -1,171 +1,155 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Conference Registration</title>
   <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f6f7f9;
-      color: #222;
-    }
-    header {
-      background: #1f2937;
-      color: #fff;
-      padding: 16px 24px;
-    }
-    header h1 {
-      margin: 0;
-      font-size: 1.5rem;
-    }
-    main {
-      max-width: 1200px;
-      margin: 24px auto;
-      padding: 0 16px;
-    }
-    .card {
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      margin-bottom: 16px;
-    }
-    .card .content {
-      padding: 24px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 24px;
-    }
-    .grid-1 {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
-    h2 {
-      margin-top: 0;
-      margin-bottom: 16px;
-      font-size: 1.25rem;
-    }
-    h3 {
-      margin-top: 24px;
-      margin-bottom: 12px;
-      font-size: 1.1rem;
-    }
-    label {
-      display: block;
-      font-weight: 600;
-      margin-bottom: 6px;
-      font-size: 0.9rem;
-    }
-    input, select {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      font-size: 1rem;
-    }
-    input:focus, select:focus {
-      outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-    button {
-      background: #2563eb;
-      color: #fff;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 1rem;
-      font-weight: 600;
-      width: 100%;
-      transition: background 0.2s ease;
-    }
-    button:hover {
-      background: #1d4ed8;
-    }
-    .flash {
-      background: #ecfccb;
-      color: #365314;
-      padding: 12px 16px;
-      border-radius: 6px;
-      margin-bottom: 16px;
-      border: 1px solid #d9f99d;
-      transition: opacity 0.5s ease;
-    }
-    .error {
-      background: #fee2e2;
-      color: #7f1d1d;
-      padding: 12px 16px;
-      border-radius: 6px;
-      margin-bottom: 16px;
-      border: 1px solid #fecaca;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-    }
-    th, td {
-      text-align: left;
-      padding: 10px 8px;
-      border-bottom: 1px solid #e5e7eb;
-    }
-    th {
-      background: #f9fafb;
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: #374151;
-    }
-    td {
-      font-size: 0.95rem;
-    }
-    small {
-      color: #6b7280;
-      font-size: 0.85rem;
+    :root {
+      --bg: #0b0f14;
+      --panel: #111827;
+      --panel-elev: #0f172a;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --primary: #3b82f6;
+      --primary-600: #2563eb;
+      --primary-700: #1d4ed8;
+      --success-bg: #052e1b;
+      --success-text: #86efac;
+      --success-glow: rgba(34,197,94,0.18);
+      --error-bg: #2a0f13;
+      --error-text: #fca5a5;
+      --border: #1f2937;
+      --table-stripe: #0e141c;
+      --shadow: 0 10px 25px rgba(0,0,0,0.35);
+      --radius: 12px;
     }
 
-    @media (min-width: 768px) {
-      .grid {
-        grid-template-columns: 1fr 1fr;
-      }
-      button {
-        width: auto;
-      }
-      header h1 {
-        font-size: 1.75rem;
-      }
-      h2 {
-        font-size: 1.5rem;
-      }
+    @media (prefers-color-scheme: dark) {
+      :root { color-scheme: dark; }
     }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      margin: 0; padding: 0; background: radial-gradient(1200px 800px at 10% 10%, #111827 0%, #0b0f14 60%, #090c11 100%);
+      color: var(--text);
+    }
+
+    header {
+      position: sticky; top: 0; z-index: 10;
+      background: rgba(9,12,17,0.7);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+    }
+    header .brand {
+      display: flex; align-items: center; gap: 12px; font-weight: 700; letter-spacing: 0.2px;
+    }
+    .logo {
+      width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+      box-shadow: 0 4px 12px rgba(59,130,246,0.35);
+    }
+
+    main { max-width: 1100px; margin: 32px auto; padding: 0 16px; }
+
+    .card {
+      background: linear-gradient(180deg, var(--panel) 0%, var(--panel-elev) 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+    .card .content { padding: 20px 22px; }
+
+    .grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
+    @media (min-width: 880px) { .grid { grid-template-columns: 1.05fr 1fr; } }
+    .grid-1 { display: grid; grid-template-columns: 1fr; gap: 14px; }
+
+    label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--muted); }
+    input, select {
+      width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: #0b111b; color: var(--text);
+      outline: none; transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
+
+    button {
+      appearance: none; background: linear-gradient(180deg, var(--primary) 0%, var(--primary-600) 100%);
+      color: #fff; border: 0; padding: 12px 16px; border-radius: 10px; cursor: pointer; font-weight: 600;
+      box-shadow: 0 8px 20px rgba(37,99,235,0.35);
+      transition: transform .04s ease, box-shadow .15s ease, filter .15s ease;
+    }
+    button:hover { filter: brightness(1.05); box-shadow: 0 10px 24px rgba(37,99,235,0.45); }
+    button:active { transform: translateY(1px); }
+
+    .flash {
+      position: relative;
+      display: flex; align-items: center; gap: 10px;
+      background: var(--success-bg);
+      color: var(--success-text);
+      padding: 12px 14px; border-radius: 10px; margin-bottom: 12px; border: 1px solid rgba(134,239,172,0.25);
+      box-shadow: 0 0 0 0 var(--success-glow), 0 10px 20px rgba(0,0,0,0.25);
+      opacity: 0; transform: translateY(-6px);
+      animation: flash-in .35s ease forwards;
+    }
+    .flash::before {
+      content: '';
+      position: absolute; inset: -2px; border-radius: 12px;
+      background: radial-gradient(120px 40px at 10% 10%, var(--success-glow), transparent 70%);
+      filter: blur(6px); pointer-events: none; z-index: 0;
+    }
+    .flash-icon { width: 18px; height: 18px; flex: 0 0 18px; color: var(--success-text); opacity: 0.95; }
+    .flash.hide { animation: flash-out .25s ease forwards; }
+
+    .error { background: var(--error-bg); color: var(--error-text); padding: 12px 14px; border-radius: 10px; margin-bottom: 12px; border: 1px solid rgba(252,165,165,0.25); }
+
+    @keyframes flash-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes flash-out { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-6px); } }
+
+    table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 10px; border: 1px solid var(--border); }
+    thead th { background: #0c1220; color: var(--muted); font-weight: 600; }
+    th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); }
+    tbody tr:nth-child(odd) { background: var(--table-stripe); }
+
+    .section-title { margin: 0 0 8px 0; font-size: 18px; letter-spacing: .2px; }
+    small { color: var(--muted); }
   </style>
 </head>
 <body>
   <header>
-    <h1>Conference Registration</h1>
+    <div class="brand"><span class="logo"></span> <span>Conference Registration</span></div>
   </header>
   <main>
     <div class="card">
       <div class="content">
-        <% if defined?(flash) && flash %>
-          <div class="flash" id="flashMessage"><%= Rack::Utils.escape_html(flash) %></div>
+        <% if flash %>
+          <div id="flash" class="flash">
+            <svg class="flash-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M9 12.75l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" opacity="0.35"/>
+            </svg>
+            <span><%= Rack::Utils.escape_html(flash) %></span>
+          </div>
           <script>
-            document.cookie = 'flash=; Max-Age=0; Path=/; SameSite=Lax';
-            setTimeout(function() {
-              var flashElement = document.getElementById('flashMessage');
-              if (flashElement) {
-                flashElement.style.opacity = '0';
-                setTimeout(function() {
-                  flashElement.style.display = 'none';
-                }, 500);
+            (function(){
+              // Defer until DOM is ready
+              function run(){
+                // Clear flash cookie (so refresh won't re-show it)
+                document.cookie = 'flash=; Max-Age=0; Path=/; SameSite=Lax';
+                var el = document.getElementById('flash');
+                if (!el) return;
+                // Ensure it's visible a bit longer, then hide
+                var visibleMs = 1200;
+                setTimeout(function(){
+                  el.classList.add('hide');
+                  el.addEventListener('animationend', function(){ el.remove(); }, { once: true });
+                }, visibleMs);
               }
-            }, 2000);
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', run);
+              } else { run(); }
+            })();
           </script>
         <% end %>
         <%= content %>

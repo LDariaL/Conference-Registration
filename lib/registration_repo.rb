@@ -5,10 +5,10 @@ require 'securerandom'
 
 module Lib
   # RegistrationRepo persists conference registrations in DynamoDB.
-  # Table schema (proposed):
-  #   TableName: registrations
+  # Table schema:
+  #   TableName: registrations (configurable via REGISTRATIONS_TABLE)
   #   PK: id (String, UUID)
-  #   Attributes: name (String), email (String), destination (String), created_at (Number epoch)
+  #   Attributes: name (String), email (String), destination (String), created_at (Number epoch seconds)
   class RegistrationRepo
     DEFAULT_TABLE = ENV.fetch('REGISTRATIONS_TABLE', 'registrations')
 
@@ -32,26 +32,42 @@ module Lib
     end
 
     def list(limit: 10)
-      resp = @ddb.scan(table_name: @table, limit: limit, projection_expression: '#id, #n, email, destination, created_at',
-                       expression_attribute_names: { '#id' => 'id', '#n' => 'name' })
-      (resp.items || []).sort_by { |i| -i['created_at'].to_i }
+      resp = @ddb.scan(
+        table_name: @table,
+        projection_expression: '#id, #n, email, destination, created_at',
+        expression_attribute_names: { '#id' => 'id', '#n' => 'name' }
+      )
+      items = (resp.items || []).sort_by { |i| -i['created_at'].to_i }
+      items.first(limit)
+    rescue Aws::DynamoDB::Errors::ServiceError => e
+      warn "[RegistrationRepo] list error: #{e.class}: #{e.message}"
+      []
     end
+
+    # Option B: scan-based lookup for email (sufficient for small scale; replace with GSI for production)
     def find_by_email(email)
       return nil if email.nil? || email.empty?
 
-      response = dynamodb_client.get_item({
-        table_name: table_name,
-        key: {
-          'email' => email
-        }
-      })
+      last_evaluated_key = nil
+      loop do
+        resp = @ddb.scan(
+          table_name: @table,
+          filter_expression: '#e = :email',
+          expression_attribute_names: { '#e' => 'email' },
+          expression_attribute_values: { ':email' => email },
+          exclusive_start_key: last_evaluated_key
+        )
+        items = resp.items || []
+        match = items.find { |it| it['email'] == email }
+        return match if match
 
-      response.item
-    rescue Aws::DynamoDB::Errors::ServiceError => e
-      puts "Error fetching registration by email: #{e.message}"
+        last_evaluated_key = resp.last_evaluated_key
+        break if last_evaluated_key.nil?
+      end
+
       nil
-    rescue Aws::DynamoDB::Errors::ResourceNotFoundException => e
-      puts "Item not found: #{e.message}"
+    rescue Aws::DynamoDB::Errors::ServiceError => e
+      warn "[RegistrationRepo] find_by_email error: #{e.class}: #{e.message}"
       nil
     end
   end
