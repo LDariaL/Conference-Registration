@@ -15,7 +15,7 @@ module Lib
     end
 
     # Build daily summaries from the free 5-day/3-hour forecast API
-    # - Groups by UTC date, computes min/max temps, and representative description
+    # - Groups by UTC date, computes min/max temps, representative description & icon, and aggregated precipitation probability (max POP per day)
     # - Skips today and returns up to `days` next days
     def daily_from_3h_forecast(city:, days: 7, units: 'metric')
       params = { q: city, units: units, appid: @api_key }
@@ -31,21 +31,31 @@ module Lib
         dt = slot['dt'].to_i
         date = Time.at(dt).utc.to_date.to_s
         temp = slot.dig('main', 'temp')
-        desc = slot.dig('weather', 0, 'description')
-        buckets[date] ||= { temps: [], descs: [] }
+        weather0 = slot.dig('weather', 0) || {}
+        desc = weather0['description']
+        icon = weather0['icon']
+        pop = slot['pop'] # probability of precipitation (0..1)
+        buckets[date] ||= { temps: [], descs: [], icons: [], pops: [] }
         buckets[date][:temps] << temp if temp
         buckets[date][:descs] << desc if desc && !desc.empty?
+        buckets[date][:icons] << icon if icon && !icon.empty?
+        buckets[date][:pops] << pop if pop
       end
 
       # Build daily summary array sorted by date
       daily = buckets.keys.sort.map do |date|
         temps = buckets[date][:temps]
         descs = buckets[date][:descs]
+        icons = buckets[date][:icons]
+        pops  = buckets[date][:pops]
         rep_desc = descs.group_by { |d| d }.max_by { |_, v| v.size }&.first
+        rep_icon = icons.group_by { |i| i }.max_by { |_, v| v.size }&.first
+        day_pop = pops.compact.max # choose max precipitation probability in the day
         {
           'date' => date,
           'temp' => { 'min' => temps.min, 'max' => temps.max },
-          'weather' => [{ 'description' => rep_desc }]
+          'pop'  => day_pop, # 0..1
+          'weather' => [{ 'description' => rep_desc, 'icon' => rep_icon }]
         }
       end
 

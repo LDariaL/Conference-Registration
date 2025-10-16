@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require 'erb'
+require 'openssl'
+require 'base64'
 require_relative './lib/weather_client'
 require_relative './lib/registration_repo'
 
@@ -38,8 +40,8 @@ class App
       warn "[App#index] param logging error: #{e.class}: #{e.message}"
     end
 
-    # Primary identity: cookie; Fallback: query param for first landing after redirect
-    user_email = req.cookies['user_email']
+    # Primary identity: signed cookie; Fallback: query param for first landing after redirect
+    user_email = read_signed_cookie(req, 'user_email')
     user_email = req.params['user_email'].to_s if (user_email.nil? || user_email.empty?) && req.params['user_email']
 
     current_registration = nil
@@ -124,7 +126,7 @@ class App
     end
 
     # Email format validation (pragmatic, case-insensitive)
-    unless email.match?(/\A[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\z/i)
+    unless email =~ /\A[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\z/i
       return redirect_simple('/', user_msg: 'Please enter a valid email address.')
     end
 
@@ -133,17 +135,18 @@ class App
       repo.create(name: name, email: email, destination: destination)
       warn "[App#register] create succeeded"
 
-      # Set cookie for future visits, but also pass user_email in query for immediate visibility
+      # Set signed cookie for future visits, and pass user_email in query for immediate visibility
       path = "/?destination=#{Rack::Utils.escape_path(destination)}&user_email=#{Rack::Utils.escape_path(email)}"
 
-      user_cookie = "user_email=#{Rack::Utils.escape(email)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=#{60*60*24*30}"
+      cookie_value = sign_cookie_value('user_email', email)
+      user_cookie = "user_email=#{Rack::Utils.escape(cookie_value)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=#{60*60*24*30}"
 
       headers = {
         'Location' => path,
         'Set-Cookie' => [user_cookie]
       }
 
-      warn "[App#register] redirecting 302 to #{path} with user_email cookie"
+      warn "[App#register] redirecting 302 to #{path} with SIGNED user_email cookie"
       [302, headers, []]
     rescue => e
       warn "[App#register] Registration error: #{e.class}: #{e.message}"
@@ -171,5 +174,38 @@ class App
     headers = { 'Location' => path }
     warn "[App#redirect_simple] 302 -> #{path} msg=#{user_msg.inspect}"
     [302, headers, []]
+  end
+
+  # ---------------- Cookie signing ----------------
+  def signing_secret
+    ENV['COOKIE_SIGNING_SECRET'] || ENV['OPENWEATHER_API_KEY'] # fallback if not provided
+  end
+
+  def sign_cookie_value(name, value)
+    secret = signing_secret
+    raise 'COOKIE_SIGNING_SECRET is not set' if secret.nil? || secret.empty?
+    data = "#{name}=#{value}"
+    mac = OpenSSL::HMAC.digest('SHA256', secret, data)
+    sig = Base64.urlsafe_encode64(mac, padding: false)
+    "#{value}--#{sig}"
+  end
+
+  def read_signed_cookie(req, name)
+    raw = req.cookies[name]
+    return nil if raw.nil? || raw.empty?
+    secret = signing_secret
+    return nil if secret.nil? || secret.empty?
+
+    # format: value--base64sig
+    value, sig = raw.split('--', 2)
+    return nil if value.nil? || sig.nil?
+
+    data = "#{name}=#{value}"
+    mac = OpenSSL::HMAC.digest('SHA256', secret, data)
+    expected = Base64.urlsafe_encode64(mac, padding: false)
+    Rack::Utils.secure_compare(sig, expected) ? value : nil
+  rescue => e
+    warn "[App#read_signed_cookie] Invalid cookie #{name}: #{e.class}: #{e.message}"
+    nil
   end
 end

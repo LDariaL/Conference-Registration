@@ -30,21 +30,30 @@
           <tr>
             <th>Date</th>
             <th>Min / Max (°C)</th>
+            <th>Rain chance</th>
             <th>Conditions</th>
           </tr>
         </thead>
         <tbody>
           <% weather_daily.each do |day| %>
-            <% # For free-tier aggregation, day is a hash like: {'date'=>"YYYY-MM-DD", 'temp'=>{'min'=>..,'max'=>..}, 'weather'=>[{ 'description'=>.. }]} %>
+            <% # day: {'date'=>"YYYY-MM-DD", 'temp'=>{'min'=>..,'max'=>..}, 'pop'=>0..1, 'weather'=>[{ 'description'=>.., 'icon'=>.. }]} %>
             <% date_str = day['date'] || (Time.at(day['dt'].to_i).utc.to_date.to_s rescue nil) %>
             <% temp = day['temp'] || {} %>
             <% min = temp['min'] %>
             <% max = temp['max'] %>
             <% desc = (day.dig('weather',0,'description') || '') %>
+            <% icon = (day.dig('weather',0,'icon') || nil) %>
+            <% pop = day['pop'] %>
             <tr>
               <td><%= Rack::Utils.escape_html(date_str.to_s) %></td>
               <td><%= [min, max].compact.map { |t| t.round(1) }.join(' / ') %></td>
-              <td><%= Rack::Utils.escape_html(desc) %></td>
+              <td><%= pop ? (pop * 100).round : '-' %>%</td>
+              <td>
+                <% if icon %>
+                  <img alt="" src="https://openweathermap.org/img/wn/<%= icon %>@2x.png" style="width:32px;height:32px;vertical-align:middle;margin-right:6px;" />
+                <% end %>
+                <%= Rack::Utils.escape_html(desc) %>
+              </td>
             </tr>
           <% end %>
         </tbody>
